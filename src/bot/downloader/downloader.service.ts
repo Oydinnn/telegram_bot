@@ -36,6 +36,21 @@ export class DownloaderService {
     return this.runWithRetry(command, outputPath);
   }
 
+
+  async downloadThumbnail(url: string): Promise<string | null> {
+    try {
+      const fileId = `thumb_${Date.now()}`;
+      const outputPath = path.join(this.tempDir, `${fileId}.jpg`);
+      const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+      const command = `yt-dlp --skip-download --write-thumbnail --convert-thumbnails jpg --cookies "${cookiesPath}" -o "${path.join(this.tempDir, fileId)}" "${url}"`;
+      await execAsync(command, { timeout: 30000 });
+      if (!fs.existsSync(outputPath)) return null;
+      return outputPath;
+    } catch {
+      return null;
+    }
+  }
+
   private async runWithRetry(command: string, outputPath: string): Promise<string> {
     const maxAttempts = 3;
     let lastError: any;

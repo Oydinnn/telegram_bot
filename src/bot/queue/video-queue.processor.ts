@@ -50,11 +50,14 @@ export class VideoQueueProcessor extends WorkerHost {
         },
       });
 
+      const thumbPath = await this.downloader.downloadThumbnail(url);
+
       const uploadStart = Date.now();
       const sentMsg = await this.bot.telegram.sendVideo(
         chatId,
         { source: filePath },
         {
+          thumbnail: thumbPath ? { source: thumbPath } : undefined,
           caption: `✅ Video tayyor!`,
           // caption: `✅ Video tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⏱ Davomiyligi: ${duration}\n⬇️ Yuklash: ${downloadTime}s\n👥 Bot foydalanuvchilari: ${userCount}`,
           reply_markup: {
@@ -71,6 +74,9 @@ export class VideoQueueProcessor extends WorkerHost {
           },
         },
       );
+
+
+      
       const uploadTime = ((Date.now() - uploadStart) / 1000).toFixed(1);
       this.logger.log(`Yuklash: ${downloadTime}s, Yuborish: ${uploadTime}s`);
 
@@ -83,6 +89,7 @@ export class VideoQueueProcessor extends WorkerHost {
       }
 
       this.downloader.cleanup(filePath);
+      if (thumbPath) this.downloader.cleanup(thumbPath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId);
     } catch (error) {
       this.logger.error(error);

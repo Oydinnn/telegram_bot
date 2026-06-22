@@ -120,6 +120,7 @@ export class BotUpdate {
       normalizedUrl: cachedVideo.instagramUrl,
       chatId: ctx.chat!.id,
       loadingMessageId: loadingMsg.message_id,
+      videoId: cachedVideo.id,
     });
   }
 
@@ -205,6 +206,8 @@ export class BotUpdate {
   }
 
   private normalizeUrl(url: string): string {
+    const storiesMatch = url.match(/\/stories\/([^/]+)\/(\d+)/);
+    if (storiesMatch) return `https://www.instagram.com/stories/${storiesMatch[1]}/${storiesMatch[2]}/`;
     const match = url.match(/\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
     if (match) return `https://www.instagram.com/reel/${match[2]}/`;
     return url.split('?')[0].trim();

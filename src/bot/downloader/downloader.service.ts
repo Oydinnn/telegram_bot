@@ -31,7 +31,7 @@ export class DownloaderService {
     const fileId = uuid();
     const outputPath = path.join(this.tempDir, `${fileId}.mp3`);
     const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
-    const command = `yt-dlp -v -f "bestaudio" --audio-format mp3 --cookies "${cookiesPath}" -o "${outputPath}" "${url}"`;
+    const command = `yt-dlp -v -x --audio-format mp3 --audio-quality 0 --cookies "${cookiesPath}" -o "${outputPath}" "${url}"`;
 
     return this.runWithRetry(command, outputPath);
   }

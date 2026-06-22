@@ -214,6 +214,6 @@ export class BotUpdate {
   }
 
   private isInstagramLink(text: string): boolean {
-    return /instagram\.com\/(p|reel|tv)\//.test(text);
+    return /instagram\.com\/(p|reel|reels|tv)\//.test(text);
   }
 }

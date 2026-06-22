@@ -58,6 +58,21 @@ export class DownloaderService {
     throw lastError;
   }
 
+  async getVideoDescription(url: string): Promise<string | null> {
+    try {
+      const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+      const command = `yt-dlp --skip-download --cookies "${cookiesPath}" --print "%(description)s" "${url}"`;
+
+      const { stdout } = await execAsync(command, { timeout: 30000 });
+      const description = stdout.trim();
+
+      return description.length > 0 ? description : null;
+    } catch (error) {
+      this.logger.warn(`Tavsifni olishda xato: ${error.message}`);
+      return null;
+    }
+  }
+
   getFileSizeMB(filePath: string): string {
     const stats = fs.statSync(filePath);
     const sizeMB = stats.size / (1024 * 1024);

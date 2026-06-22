@@ -24,11 +24,24 @@ export class VideoQueueProcessor extends WorkerHost {
     const downloadStart = Date.now();
 
     try {
-      const filePath = await this.downloader.downloadInstagramVideo(url);
+      const [filePath, description] = await Promise.all([
+        this.downloader.downloadInstagramVideo(url),
+        this.downloader.getVideoDescription(url),
+      ]);
       const downloadTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
       const fileSizeMB = this.downloader.getFileSizeMB(filePath);
       const duration = await this.downloader.getVideoDuration(filePath);
       const userCount = await this.prisma.user.count();
+
+      const cachedVideo = await this.prisma.cachedVideo.upsert({
+        where: { instagramUrl: normalizedUrl },
+        update: { description },
+        create: {
+          instagramUrl: normalizedUrl,
+          telegramFileId: '',
+          description,
+        },
+      });
 
       const uploadStart = Date.now();
       const sentMsg = await this.bot.telegram.sendVideo(
@@ -40,6 +53,7 @@ export class VideoQueueProcessor extends WorkerHost {
             inline_keyboard: [
               [
                 { text: '🗑 O\'chirish', callback_data: 'delete_video' },
+                { text: '📝 Tavsif', callback_data: `show_description:${cachedVideo.id}` },
               ],
             ],
           },
@@ -50,13 +64,9 @@ export class VideoQueueProcessor extends WorkerHost {
 
       const video = sentMsg.video as any;
       if (video?.file_id) {
-        await this.prisma.cachedVideo.upsert({
-          where: { instagramUrl: normalizedUrl },
-          update: { telegramFileId: video.file_id },
-          create: {
-            instagramUrl: normalizedUrl,
-            telegramFileId: video.file_id,
-          },
+        await this.prisma.cachedVideo.update({
+          where: { id: cachedVideo.id },
+          data: { telegramFileId: video.file_id },
         });
       }
 

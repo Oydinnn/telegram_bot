@@ -62,6 +62,31 @@ export class BotUpdate {
     await ctx.deleteMessage().catch(() => {});
   }
 
+  @Action(/^show_description:(\d+)$/)
+  async onShowDescription(@Ctx() ctx: Context) {
+    const match = (ctx as any).match;
+    const videoId = parseInt(match[1], 10);
+
+    const cachedVideo = await this.prisma.cachedVideo.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!cachedVideo || !cachedVideo.description) {
+      await ctx.answerCbQuery('Tavsif topilmadi 😔', { show_alert: true });
+      return;
+    }
+
+    await ctx.answerCbQuery();
+
+    const description = cachedVideo.description.length > 900
+      ? cachedVideo.description.slice(0, 900) + '...'
+      : cachedVideo.description;
+
+    await ctx.reply(`📝 <b>Post tavsifi:</b>\n\n${description}`, {
+      parse_mode: 'HTML',
+    });
+  }
+
   @Action('back_to_start')
   async onBackToStart(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();
@@ -94,6 +119,14 @@ export class BotUpdate {
       const userCount = await this.prisma.user.count();
       await ctx.replyWithVideo(cached.telegramFileId, {
         caption: `✅ Video tayyor! (keshdan, ${((Date.now() - startTime) / 1000).toFixed(1)}s)\n\n👥 Bot foydalanuvchilari: ${userCount}`,
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '🗑 O\'chirish', callback_data: 'delete_video' },
+              { text: '📝 Tavsif', callback_data: `show_description:${cached.id}` },
+            ],
+          ],
+        },
       });
       return;
     }

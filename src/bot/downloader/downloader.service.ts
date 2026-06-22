@@ -24,6 +24,19 @@ export class DownloaderService {
     const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
     const command = `yt-dlp -v -f "best[ext=mp4]" --cookies "${cookiesPath}" --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M" -o "${outputPath}" "${url}"`;
 
+    return this.runWithRetry(command, outputPath);
+  }
+
+  async downloadInstagramAudio(url: string): Promise<string> {
+    const fileId = uuid();
+    const outputPath = path.join(this.tempDir, `${fileId}.mp3`);
+    const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+    const command = `yt-dlp -v -x --audio-format mp3 --cookies "${cookiesPath}" -o "${outputPath}" "${url}"`;
+
+    return this.runWithRetry(command, outputPath);
+  }
+
+  private async runWithRetry(command: string, outputPath: string): Promise<string> {
     const maxAttempts = 3;
     let lastError: any;
 
@@ -41,7 +54,7 @@ export class DownloaderService {
         this.logger.log(`yt-dlp jami vaqti: ${totalTime}s`);
 
         if (!fs.existsSync(outputPath)) {
-          throw new Error('Video yuklab bo\'lmadi');
+          throw new Error('Fayl yuklab bo\'lmadi');
         }
 
         return outputPath;

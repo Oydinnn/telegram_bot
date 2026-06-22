@@ -87,6 +87,32 @@ export class BotUpdate {
     });
   }
 
+  @Action(/^download_audio:(\d+)$/)
+  async onDownloadAudio(@Ctx() ctx: Context) {
+    const match = (ctx as any).match;
+    const videoId = parseInt(match[1], 10);
+
+    const cachedVideo = await this.prisma.cachedVideo.findUnique({
+      where: { id: videoId },
+    });
+
+    if (!cachedVideo) {
+      await ctx.answerCbQuery('Video topilmadi 😔', { show_alert: true });
+      return;
+    }
+
+    await ctx.answerCbQuery('🎵 MP3 ajratilmoqda...');
+
+    const loadingMsg = await ctx.reply('⏳ MP3 ajratilmoqda...');
+
+    await this.videoQueue.addAudioJob({
+      url: cachedVideo.instagramUrl,
+      normalizedUrl: cachedVideo.instagramUrl,
+      chatId: ctx.chat!.id,
+      loadingMessageId: loadingMsg.message_id,
+    });
+  }
+
   @Action('back_to_start')
   async onBackToStart(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();
@@ -124,6 +150,9 @@ export class BotUpdate {
             [
               { text: '🗑 O\'chirish', callback_data: 'delete_video' },
               { text: '📝 Tavsif', callback_data: `show_description:${cached.id}` },
+            ],
+            [
+              { text: '🎵 MP3', callback_data: `download_audio:${cached.id}` },
             ],
           ],
         },

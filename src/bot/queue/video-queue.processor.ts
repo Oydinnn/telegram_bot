@@ -20,7 +20,14 @@ export class VideoQueueProcessor extends WorkerHost {
   }
 
   async process(job: Job<VideoJobData>): Promise<void> {
-    const { url, normalizedUrl, chatId, loadingMessageId} = job.data;
+    if (job.data.type === 'audio') {
+      return this.processAudio(job);
+    }
+    return this.processVideo(job);
+  }
+
+  private async processVideo(job: Job<VideoJobData>): Promise<void> {
+    const { url, normalizedUrl, chatId, loadingMessageId } = job.data;
     const downloadStart = Date.now();
 
     try {
@@ -54,6 +61,9 @@ export class VideoQueueProcessor extends WorkerHost {
               [
                 { text: '🗑 O\'chirish', callback_data: 'delete_video' },
                 { text: '📝 Tavsif', callback_data: `show_description:${cachedVideo.id}` },
+              ],
+              [
+                { text: '🎵 MP3', callback_data: `download_audio:${cachedVideo.id}` },
               ],
             ],
           },
@@ -91,6 +101,39 @@ export class VideoQueueProcessor extends WorkerHost {
           '❌ Videoni yuklab bo\'lmadi. Linkni tekshirib qaytadan urinib ko\'ring.',
         );
       }
+    }
+  }
+
+  private async processAudio(job: Job<VideoJobData>): Promise<void> {
+    const { url, chatId, loadingMessageId } = job.data;
+    const downloadStart = Date.now();
+
+    try {
+      const filePath = await this.downloader.downloadInstagramAudio(url);
+      const downloadTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
+      const fileSizeMB = this.downloader.getFileSizeMB(filePath);
+
+      await this.bot.telegram.sendAudio(
+        chatId,
+        { source: filePath },
+        {
+          caption: `🎵 MP3 tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⬇️ Yuklash: ${downloadTime}s`,
+        },
+      );
+
+      this.downloader.cleanup(filePath);
+      await this.bot.telegram.deleteMessage(chatId, loadingMessageId).catch(() => {});
+    } catch (error) {
+      this.logger.error(error);
+
+      await this.bot.telegram
+        .deleteMessage(chatId, loadingMessageId)
+        .catch(() => {});
+
+      await this.bot.telegram.sendMessage(
+        chatId,
+        '❌ MP3 ajratib bo\'lmadi. Qaytadan urinib ko\'ring.',
+      );
     }
   }
 }

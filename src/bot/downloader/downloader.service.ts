@@ -19,27 +19,44 @@ export class DownloaderService {
   }
 
   async downloadInstagramVideo(url: string): Promise<string> {
-  const fileId = uuid();
-  const outputPath = path.join(this.tempDir, `${fileId}.mp4`);
+    const fileId = uuid();
+    const outputPath = path.join(this.tempDir, `${fileId}.mp4`);
+    const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+    const command = `yt-dlp -v -f "best[ext=mp4]" --cookies "${cookiesPath}" --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M" -o "${outputPath}" "${url}"`;
 
- 
+    const maxAttempts = 3;
+    let lastError: any;
 
-  const command = `yt-dlp -v -f "best[ext=mp4]" --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M" -o "${outputPath}" "${url}"`; 
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const delayMs = 1000 + Math.random() * 1000;
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
 
-  this.logger.log(`Buyruq: ${command}`);
-  const t0 = Date.now();
+        this.logger.log(`Buyruq (urinish ${attempt}/${maxAttempts}): ${command}`);
+        const t0 = Date.now();
 
-  const { stdout, stderr } = await execAsync(command, { timeout: 300000 });
+        await execAsync(command, { timeout: 300000 });
 
-  const totalTime = ((Date.now() - t0) / 1000).toFixed(1);
-  this.logger.log(`yt-dlp jami vaqti: ${totalTime}s`);
+        const totalTime = ((Date.now() - t0) / 1000).toFixed(1);
+        this.logger.log(`yt-dlp jami vaqti: ${totalTime}s`);
 
-  if (!fs.existsSync(outputPath)) {
-    throw new Error('Video yuklab bo\'lmadi');
+        if (!fs.existsSync(outputPath)) {
+          throw new Error('Video yuklab bo\'lmadi');
+        }
+
+        return outputPath;
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(`Urinish ${attempt} muvaffaqiyatsiz: ${error.message}`);
+
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+      }
+    }
+
+    throw lastError;
   }
-
-  return outputPath;
-}
 
   getFileSizeMB(filePath: string): string {
     const stats = fs.statSync(filePath);

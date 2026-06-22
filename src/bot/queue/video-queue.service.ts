@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 
 export interface VideoJobData {
   type: 'video' | 'audio';
+  videoId?: number;
   url: string;
   normalizedUrl: string;
   chatId: number;

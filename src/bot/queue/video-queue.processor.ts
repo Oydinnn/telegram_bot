@@ -122,15 +122,21 @@ export class VideoQueueProcessor extends WorkerHost {
       const downloadTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
       const fileSizeMB = this.downloader.getFileSizeMB(filePath);
 
-      await this.bot.telegram.sendAudio(
+      const sentAudio = await this.bot.telegram.sendAudio(
         chatId,
         { source: filePath },
         {
           caption: `🎵 MP3 tayyor!`,
-          // caption: `🎵 MP3 tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⬇️ Yuklash: ${downloadTime}s`,
-
         },
       );
+
+      const audio = sentAudio.audio as any;
+      if (audio?.file_id && job.data.videoId) {
+        await this.prisma.cachedVideo.update({
+          where: { id: job.data.videoId },
+          data: { audioFileId: audio.file_id },
+        });
+      }
 
       this.downloader.cleanup(filePath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId).catch(() => {});

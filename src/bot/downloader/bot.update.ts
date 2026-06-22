@@ -101,6 +101,16 @@ export class BotUpdate {
       return;
     }
 
+
+  // Keshdan audio bor bo'lsa — to'g'ridan yuborish
+  if (cachedVideo.audioFileId) {
+    await ctx.answerCbQuery('🎵 MP3 tayyor!');
+    await ctx.replyWithAudio(cachedVideo.audioFileId, {
+      caption: '🎵 MP3 tayyor!',
+    });
+    return;
+  }
+
     await ctx.answerCbQuery('🎵 MP3 ajratilmoqda...');
 
     const loadingMsg = await ctx.reply('⏳ MP3 ajratilmoqda...');
@@ -195,6 +205,8 @@ export class BotUpdate {
   }
 
   private normalizeUrl(url: string): string {
+    const match = url.match(/\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/);
+    if (match) return `https://www.instagram.com/reel/${match[2]}/`;
     return url.split('?')[0].trim();
   }
 

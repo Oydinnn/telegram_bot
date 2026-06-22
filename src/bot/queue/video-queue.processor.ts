@@ -130,10 +130,18 @@ export class VideoQueueProcessor extends WorkerHost {
         .deleteMessage(chatId, loadingMessageId)
         .catch(() => {});
 
-      await this.bot.telegram.sendMessage(
-        chatId,
-        '❌ MP3 ajratib bo\'lmadi. Qaytadan urinib ko\'ring.',
-      );
+      const errMsg = error instanceof Error ? error.message : '';
+      if (errMsg.toLowerCase().includes('audio codec')) {
+        await this.bot.telegram.sendMessage(
+          chatId,
+          '❌ Bu reelda audio mavjud emas.',
+        );
+      } else {
+        await this.bot.telegram.sendMessage(
+          chatId,
+          '❌ MP3 ajratib bo\'lmadi. Qaytadan urinib ko\'ring.',
+        );
+      }
     }
   }
 }

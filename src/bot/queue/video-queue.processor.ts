@@ -35,8 +35,14 @@ export class VideoQueueProcessor extends WorkerHost {
         chatId,
         { source: filePath },
         {
-
           caption: `✅ Video tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⏱ Davomiyligi: ${duration}\n⬇️ Yuklash: ${downloadTime}s\n👥 Bot foydalanuvchilari: ${userCount}`,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '🗑 O\'chirish', callback_data: 'delete_video' },
+              ],
+            ],
+          },
         },
       );
       const uploadTime = ((Date.now() - uploadStart) / 1000).toFixed(1);

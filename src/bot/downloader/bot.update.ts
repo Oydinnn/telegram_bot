@@ -56,6 +56,12 @@ export class BotUpdate {
     });
   }
 
+  @Action('delete_video')
+  async onDeleteVideo(@Ctx() ctx: Context) {
+    await ctx.answerCbQuery();
+    await ctx.deleteMessage().catch(() => {});
+  }
+
   @Action('back_to_start')
   async onBackToStart(@Ctx() ctx: Context) {
     await ctx.answerCbQuery();

@@ -64,7 +64,7 @@ export class VideoQueueProcessor extends WorkerHost {
         .deleteMessage(chatId, loadingMessageId)
         .catch(() => {});
 
-      if (message.includes('no video')) {
+      if (message.toLowerCase().includes('no video formats')) {
         await this.bot.telegram.sendMessage(
           chatId,
           '❌ Bu post video emas, rasm ekan. Video (Reel) link yuboring.',

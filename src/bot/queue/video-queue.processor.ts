@@ -55,15 +55,17 @@ export class VideoQueueProcessor extends WorkerHost {
         chatId,
         { source: filePath },
         {
-          caption: `✅ Video tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⏱ Davomiyligi: ${duration}\n⬇️ Yuklash: ${downloadTime}s\n👥 Bot foydalanuvchilari: ${userCount}`,
+          caption: `✅ Video tayyor!`,
+          // caption: `✅ Video tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⏱ Davomiyligi: ${duration}\n⬇️ Yuklash: ${downloadTime}s\n👥 Bot foydalanuvchilari: ${userCount}`,
           reply_markup: {
             inline_keyboard: [
               [
-                { text: '🗑 O\'chirish', callback_data: 'delete_video' },
                 { text: '📝 Tavsif', callback_data: `show_description:${cachedVideo.id}` },
+                { text: '🎵 MP3', callback_data: `download_audio:${cachedVideo.id}` },
               ],
               [
-                { text: '🎵 MP3', callback_data: `download_audio:${cachedVideo.id}` },
+                { text: '🗑 O\'chirish', callback_data: 'delete_video' },
+
               ],
             ],
           },
@@ -117,7 +119,9 @@ export class VideoQueueProcessor extends WorkerHost {
         chatId,
         { source: filePath },
         {
-          caption: `🎵 MP3 tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⬇️ Yuklash: ${downloadTime}s`,
+          caption: `🎵 MP3 tayyor!`,
+          // caption: `🎵 MP3 tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⬇️ Yuklash: ${downloadTime}s`,
+
         },
       );
 

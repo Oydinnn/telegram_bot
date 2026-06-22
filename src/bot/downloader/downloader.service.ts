@@ -28,7 +28,7 @@ export class DownloaderService {
   }
 
   async downloadInstagramAudio(url: string): Promise<string> {
-    const fileId = uuid();
+    const fileId = `audiofile_${Date.now()}`;
     const outputPath = path.join(this.tempDir, `${fileId}.mp3`);
     const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
     const command = `yt-dlp -v -x --audio-format mp3 --audio-quality 0 --cookies "${cookiesPath}" -o "${outputPath}" "${url}"`;

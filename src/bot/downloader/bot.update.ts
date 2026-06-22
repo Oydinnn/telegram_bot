@@ -144,7 +144,9 @@ export class BotUpdate {
     if (cached) {
       const userCount = await this.prisma.user.count();
       await ctx.replyWithVideo(cached.telegramFileId, {
-        caption: `✅ Video tayyor! (keshdan, ${((Date.now() - startTime) / 1000).toFixed(1)}s)\n\n👥 Bot foydalanuvchilari: ${userCount}`,
+        caption: `✅ Video tayyor!`,
+        // caption: `✅ Video tayyor! (keshdan, ${((Date.now() - startTime) / 1000).toFixed(1)}s)\n\n👥 Bot foydalanuvchilari: ${userCount}`,
+
         reply_markup: {
           inline_keyboard: [
             [
@@ -160,7 +162,7 @@ export class BotUpdate {
       return;
     }
 
-    const loadingMsg = await ctx.reply('⏳ Video navbatga qo\'yildi...');
+    const loadingMsg = await ctx.reply('⏳ Video yuklanmoqda ...');
 
     await this.videoQueue.addVideoJob({
       url: text,

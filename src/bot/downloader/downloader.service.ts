@@ -12,11 +12,11 @@ export class DownloaderService {
   private readonly logger = new Logger(DownloaderService.name);
   private tempDir = path.join(__dirname, '..', '..', 'temp');
   private cookieFiles = [
-    'cookies/cookie_1.txt',
-    'cookies/cookie_2.txt',
-    'cookies/cookie_3.txt',
-    'cookies/cookie_4.txt',
     'cookies/cookie_5.txt',
+    'cookies/cookie_6.txt',
+    'cookies/cookie_7.txt',
+    'cookies/cookie_8.txt',
+    'cookies/cookie_9.txt',
   ];
   private cookieIndex = 0;
 

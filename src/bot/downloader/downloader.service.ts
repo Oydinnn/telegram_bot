@@ -14,6 +14,9 @@ export class DownloaderService {
   private cookieFiles = [
     'cookies/cookie_1.txt',
     'cookies/cookie_2.txt',
+    'cookies/cookie_3.txt',
+    'cookies/cookie_4.txt',
+    'cookies/cookie_5.txt',
   ];
   private cookieIndex = 0;
 

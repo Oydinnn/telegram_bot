@@ -1,9 +1,7 @@
 import sys
-import json
 import random
 from instagrapi import Client
 
-# 7 ta akkaunt — tasodifiy biri tanlanadi
 ACCOUNTS = [
     {"username": "comp30798", "password": "$UaL3piEgnc#_B&"},
     {"username": "seiyul190720002026", "password": "iyul19072000gmail.com"},
@@ -15,26 +13,20 @@ ACCOUNTS = [
 ]
 
 def get_video_url(instagram_url: str) -> str:
-    # Har safar tasodifiy akkaunt tanlanadi — bir akkaunt ko'p ishlatilmasin
     account = random.choice(ACCOUNTS)
+    print(f"DEBUG: {account['username']} bilan login qilinmoqda...", file=sys.stderr)
     
-    # instagrapi client yaratamiz
     cl = Client()
-    
-    # Login qilamiz
     cl.login(account["username"], account["password"])
+    print(f"DEBUG: Login muvaffaqiyatli!", file=sys.stderr)
     
-    # URL dan media ID ni olamiz
     media_pk = cl.media_pk_from_url(instagram_url)
+    print(f"DEBUG: media_pk: {media_pk}", file=sys.stderr)
     
-    # Media ma'lumotlarini olamiz
     media_info = cl.media_info(media_pk)
-    
-    # Video URL ni qaytaramiz
     return str(media_info.video_url)
 
 if __name__ == "__main__":
-    # NestJS dan: python3 insta.py "https://instagram.com/reel/..."
     if len(sys.argv) < 2:
         print("ERROR: URL berilmadi", file=sys.stderr)
         sys.exit(1)
@@ -43,7 +35,6 @@ if __name__ == "__main__":
     
     try:
         video_url = get_video_url(url)
-        # Faqat URL ni chiqaramiz — NestJS shu qatorni o'qiydi
         print(video_url)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)

@@ -11,6 +11,17 @@ const execAsync = promisify(exec);
 export class DownloaderService {
   private readonly logger = new Logger(DownloaderService.name);
   private tempDir = path.join(__dirname, '..', '..', 'temp');
+  private cookieFiles = [
+    'cookies/cookie_1.txt',
+    'cookies/cookie_2.txt',
+  ];
+  private cookieIndex = 0;
+
+  private getNextCookie(): string {
+    const cookie = this.cookieFiles[this.cookieIndex % this.cookieFiles.length];
+    this.cookieIndex++;
+    return path.join(process.cwd(), cookie);
+  }
 
   constructor() {
     if (!fs.existsSync(this.tempDir)) {
@@ -21,7 +32,7 @@ export class DownloaderService {
   async downloadInstagramVideo(url: string): Promise<string> {
     const fileId = uuid();
     const outputPath = path.join(this.tempDir, `${fileId}.mp4`);
-    const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+    const cookiesPath = this.getNextCookie();
     const command = `yt-dlp -v -f "best[ext=mp4]" --cookies "${cookiesPath}" --downloader aria2c --downloader-args "aria2c:-x 16 -s 16 -k 1M" -o "${outputPath}" "${url}"`;
 
     return this.runWithRetry(command, outputPath);
@@ -30,7 +41,7 @@ export class DownloaderService {
   async downloadInstagramAudio(url: string): Promise<string> {
     const fileId = `audiofile_${Date.now()}`;
     const outputPath = path.join(this.tempDir, `${fileId}.mp3`);
-    const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+    const cookiesPath = this.getNextCookie();
     const command = `yt-dlp -v -x --audio-format mp3 --audio-quality 0 --cookies "${cookiesPath}" -o "${outputPath}" "${url}"`;
 
     return this.runWithRetry(command, outputPath);
@@ -41,7 +52,7 @@ export class DownloaderService {
     try {
       const fileId = `thumb_${Date.now()}`;
       const outputPath = path.join(this.tempDir, `${fileId}.jpg`);
-      const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+      const cookiesPath = this.getNextCookie();
       const command = `yt-dlp --skip-download --write-thumbnail --convert-thumbnails jpg --cookies "${cookiesPath}" -o "${path.join(this.tempDir, fileId)}" "${url}"`;
       await execAsync(command, { timeout: 30000 });
       if (!fs.existsSync(outputPath)) return null;
@@ -88,7 +99,7 @@ export class DownloaderService {
 
   async getVideoDescription(url: string): Promise<string | null> {
     try {
-      const cookiesPath = path.join(process.cwd(), 'instagram_cookies.txt');
+      const cookiesPath = this.getNextCookie();
       const command = `yt-dlp --skip-download --cookies "${cookiesPath}" --print "%(description)s" "${url}"`;
 
       const { stdout } = await execAsync(command, { timeout: 30000 });

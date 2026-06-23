@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 
 export interface HikerApiMediaResult {
   videoUrl: string;
+  thumbnailUrl: string | null;
+  audioUrl: string | null;
   durationSeconds: number;
   caption: string | null;
   username: string | null;
@@ -78,6 +80,8 @@ export class HikerApiService {
 
     return {
       videoUrl,
+      thumbnailUrl: media.image_versions2?.candidates?.[0]?.url ?? null,
+      audioUrl: media.clips_metadata?.original_sound_info?.progressive_download_url ?? null,
       durationSeconds: media.video_duration ?? 0,
       caption: media.caption?.text ?? null,
       username: media.user?.username ?? null,

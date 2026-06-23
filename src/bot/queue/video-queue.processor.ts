@@ -54,6 +54,7 @@ export class VideoQueueProcessor extends WorkerHost {
         chatId,
         { url: mediaInfo.videoUrl },
         {
+          thumbnail: mediaInfo.thumbnailUrl ? { url: mediaInfo.thumbnailUrl } : undefined,
           caption: `✅ Video tayyor!`,
           reply_markup: {
             inline_keyboard: [
@@ -115,13 +116,24 @@ export class VideoQueueProcessor extends WorkerHost {
     const downloadStart = Date.now();
 
     try {
-      const filePath = await this.downloader.downloadInstagramAudio(url);
-      const downloadTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
-      const fileSizeMB = this.downloader.getFileSizeMB(filePath);
+      const mediaInfo = await this.hikerApi.getMediaInfo(url);
+      const fetchTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
+      this.logger.log(`HikerAPI (audio) javob vaqti: ${fetchTime}s`);
+
+      if (!mediaInfo.audioUrl) {
+        await this.bot.telegram
+          .deleteMessage(chatId, loadingMessageId)
+          .catch(() => {});
+        await this.bot.telegram.sendMessage(
+          chatId,
+          '❌ Bu reelda audio mavjud emas.',
+        );
+        return;
+      }
 
       const sentAudio = await this.bot.telegram.sendAudio(
         chatId,
-        { source: filePath },
+        { url: mediaInfo.audioUrl },
         {
           caption: `🎵 MP3 tayyor!`,
         },
@@ -135,7 +147,6 @@ export class VideoQueueProcessor extends WorkerHost {
         });
       }
 
-      this.downloader.cleanup(filePath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId).catch(() => {});
     } catch (error) {
       this.logger.error(error);
@@ -144,18 +155,10 @@ export class VideoQueueProcessor extends WorkerHost {
         .deleteMessage(chatId, loadingMessageId)
         .catch(() => {});
 
-      const errMsg = error instanceof Error ? error.message : '';
-      if (errMsg.toLowerCase().includes('audio codec')) {
-        await this.bot.telegram.sendMessage(
-          chatId,
-          '❌ Bu reelda audio mavjud emas.',
-        );
-      } else {
-        await this.bot.telegram.sendMessage(
-          chatId,
-          '❌ MP3 ajratib bo\'lmadi. Qaytadan urinib ko\'ring.',
-        );
-      }
+      await this.bot.telegram.sendMessage(
+        chatId,
+        '❌ MP3 ajratib bo\'lmadi. Qaytadan urinib ko\'ring.',
+      );
     }
   }
 }

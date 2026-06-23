@@ -7,7 +7,7 @@ import { DownloaderService } from '../downloader/downloader.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VideoJobData } from './video-queue.service';
 
-@Processor('video-download', { concurrency: 2 })
+@Processor('video-download', { concurrency: 5 })
 export class VideoQueueProcessor extends WorkerHost {
   private readonly logger = new Logger(VideoQueueProcessor.name);
 

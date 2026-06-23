@@ -3,6 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { VideoQueueService } from './video-queue.service';
 import { VideoQueueProcessor } from './video-queue.processor';
 import { DownloaderService } from '../downloader/downloader.service';
+import { UserProcessingService } from '../downloader/user-processing.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
@@ -13,6 +14,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     PrismaModule,
   ],
   providers: [VideoQueueService, VideoQueueProcessor, DownloaderService],
-  exports: [VideoQueueService],
+  exports: [VideoQueueService, UserProcessingService],
 })
 export class VideoQueueModule {}

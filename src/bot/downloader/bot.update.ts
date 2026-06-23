@@ -176,7 +176,8 @@ export class BotUpdate {
     const userId = ctx.from!.id;
 
     if (this.userProcessing.has(userId)) {
-      return ctx.reply('⏳ Oldingi videongiz hali yuklanmoqda. Biroz kuting.');
+      await ctx.reply('⏳ Oldingi videongiz hali yuklanmoqda. Biroz kuting.');
+      return;
     }
 
     this.userProcessing.add(userId);

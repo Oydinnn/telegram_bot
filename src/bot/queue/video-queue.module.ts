@@ -13,7 +13,7 @@ import { PrismaModule } from 'src/prisma/prisma.module';
     }),
     PrismaModule,
   ],
-  providers: [VideoQueueService, VideoQueueProcessor, DownloaderService],
+  providers: [VideoQueueService, VideoQueueProcessor, DownloaderService, UserProcessingService],
   exports: [VideoQueueService, UserProcessingService],
 })
 export class VideoQueueModule {}

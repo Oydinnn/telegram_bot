@@ -91,6 +91,7 @@ export class BotUpdate {
   async onDownloadAudio(@Ctx() ctx: Context) {
     const match = (ctx as any).match;
     const videoId = parseInt(match[1], 10);
+    const userId = ctx.from!.id;
 
     const cachedVideo = await this.prisma.cachedVideo.findUnique({
       where: { id: videoId },
@@ -101,16 +102,21 @@ export class BotUpdate {
       return;
     }
 
+    // Keshdan audio bor bo'lsa — to'g'ridan yuborish
+    if (cachedVideo.audioFileId) {
+      await ctx.answerCbQuery('🎵 MP3 tayyor!');
+      await ctx.replyWithAudio(cachedVideo.audioFileId, {
+        caption: '🎵 MP3 tayyor!',
+      });
+      return;
+    }
 
-  // Keshdan audio bor bo'lsa — to'g'ridan yuborish
-  if (cachedVideo.audioFileId) {
-    await ctx.answerCbQuery('🎵 MP3 tayyor!');
-    await ctx.replyWithAudio(cachedVideo.audioFileId, {
-      caption: '🎵 MP3 tayyor!',
-    });
-    return;
-  }
+    if (this.userProcessing.has(userId)) {
+      await ctx.answerCbQuery('⏳ Oldingi so\'rovingiz hali bajarilmoqda. Biroz kuting.', { show_alert: true });
+      return;
+    }
 
+    this.userProcessing.add(userId);
     await ctx.answerCbQuery('🎵 MP3 ajratilmoqda...');
 
     const loadingMsg = await ctx.reply('⏳ MP3 ajratilmoqda...');
@@ -121,6 +127,7 @@ export class BotUpdate {
       chatId: ctx.chat!.id,
       loadingMessageId: loadingMsg.message_id,
       videoId: cachedVideo.id,
+      userId,
     });
   }
 

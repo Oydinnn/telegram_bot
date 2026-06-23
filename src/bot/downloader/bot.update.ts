@@ -2,16 +2,16 @@ import { Update, Ctx, On, Start, Action } from 'nestjs-telegraf';
 import { Context, Markup } from 'telegraf';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VideoQueueService } from '../queue/video-queue.service';
+import { UserProcessingService } from './user-processing.service';
 
 
 
 @Update()
 export class BotUpdate {
-  // chatId -> kutilayotgan link (sifat tanlanguncha)
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly videoQueue: VideoQueueService,
+    private readonly userProcessing: UserProcessingService,
   ) {}
 
   @Start()
@@ -173,6 +173,13 @@ export class BotUpdate {
       return;
     }
 
+    const userId = ctx.from!.id;
+
+    if (this.userProcessing.has(userId)) {
+      return ctx.reply('⏳ Oldingi videongiz hali yuklanmoqda. Biroz kuting.');
+    }
+
+    this.userProcessing.add(userId);
     const loadingMsg = await ctx.reply('⏳ Video yuklanmoqda ...');
 
     await this.videoQueue.addVideoJob({
@@ -180,6 +187,7 @@ export class BotUpdate {
       normalizedUrl,
       chatId: ctx.chat!.id,
       loadingMessageId: loadingMsg.message_id,
+      userId,
     });
   }
 
@@ -226,6 +234,10 @@ export class BotUpdate {
         firstName: from.first_name,
       },
     });
+  }
+
+  releaseUser(userId: number) {
+    this.userProcessing.delete(userId);
   }
 
   private isInstagramLink(text: string): boolean {

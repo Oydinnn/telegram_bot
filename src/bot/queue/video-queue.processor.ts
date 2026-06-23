@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { DownloaderService } from '../downloader/downloader.service';
+import { UserProcessingService } from '../downloader/user-processing.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VideoJobData } from './video-queue.service';
 
@@ -15,6 +16,7 @@ export class VideoQueueProcessor extends WorkerHost {
     @InjectBot() private readonly bot: Telegraf,
     private readonly downloader: DownloaderService,
     private readonly prisma: PrismaService,
+    private readonly userProcessing: UserProcessingService,
   ) {
     super();
   }
@@ -91,6 +93,7 @@ export class VideoQueueProcessor extends WorkerHost {
       this.downloader.cleanup(filePath);
       if (thumbPath) this.downloader.cleanup(thumbPath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId);
+      if (job.data.userId) this.userProcessing.delete(job.data.userId);
     } catch (error) {
       this.logger.error(error);
       const message = error instanceof Error ? error.message : '';
@@ -98,6 +101,7 @@ export class VideoQueueProcessor extends WorkerHost {
       await this.bot.telegram
         .deleteMessage(chatId, loadingMessageId)
         .catch(() => {});
+      if (job.data.userId) this.userProcessing.delete(job.data.userId);
 
       if (message.toLowerCase().includes('no video formats')) {
         await this.bot.telegram.sendMessage(

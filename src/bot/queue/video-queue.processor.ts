@@ -5,6 +5,7 @@ import { InjectBot } from 'nestjs-telegraf';
 import { Telegraf } from 'telegraf';
 import { DownloaderService } from '../downloader/downloader.service';
 import { UserProcessingService } from '../downloader/user-processing.service';
+import { HikerApiService } from '../downloader/hikerapi.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { VideoJobData } from './video-queue.service';
 
@@ -15,6 +16,7 @@ export class VideoQueueProcessor extends WorkerHost {
   constructor(
     @InjectBot() private readonly bot: Telegraf,
     private readonly downloader: DownloaderService,
+    private readonly hikerApi: HikerApiService,
     private readonly prisma: PrismaService,
     private readonly userProcessing: UserProcessingService,
   ) {
@@ -33,35 +35,26 @@ export class VideoQueueProcessor extends WorkerHost {
     const downloadStart = Date.now();
 
     try {
-      const [filePath, description] = await Promise.all([
-        this.downloader.downloadInstagramVideo(url),
-        this.downloader.getVideoDescription(url),
-      ]);
-      const downloadTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
-      const fileSizeMB = this.downloader.getFileSizeMB(filePath);
-      const duration = await this.downloader.getVideoDuration(filePath);
-      const userCount = await this.prisma.user.count();
+      const mediaInfo = await this.hikerApi.getMediaInfo(url);
+      const fetchTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
+      this.logger.log(`HikerAPI javob vaqti: ${fetchTime}s`);
 
       const cachedVideo = await this.prisma.cachedVideo.upsert({
         where: { instagramUrl: normalizedUrl },
-        update: { description },
+        update: { description: mediaInfo.caption },
         create: {
           instagramUrl: normalizedUrl,
           telegramFileId: '',
-          description,
+          description: mediaInfo.caption,
         },
       });
-
-      const thumbPath = await this.downloader.downloadThumbnail(url);
 
       const uploadStart = Date.now();
       const sentMsg = await this.bot.telegram.sendVideo(
         chatId,
-        { source: filePath },
+        { url: mediaInfo.videoUrl },
         {
-          thumbnail: thumbPath ? { source: thumbPath } : undefined,
           caption: `✅ Video tayyor!`,
-          // caption: `✅ Video tayyor!\n📦 Hajmi: ${fileSizeMB} MB\n⏱ Davomiyligi: ${duration}\n⬇️ Yuklash: ${downloadTime}s\n👥 Bot foydalanuvchilari: ${userCount}`,
           reply_markup: {
             inline_keyboard: [
               [
@@ -70,17 +63,14 @@ export class VideoQueueProcessor extends WorkerHost {
               ],
               [
                 { text: '🗑 O\'chirish', callback_data: 'delete_video' },
-
               ],
             ],
           },
         },
       );
 
-
-      
       const uploadTime = ((Date.now() - uploadStart) / 1000).toFixed(1);
-      this.logger.log(`Yuklash: ${downloadTime}s, Yuborish: ${uploadTime}s`);
+      this.logger.log(`HikerAPI: ${fetchTime}s, Telegram yuborish: ${uploadTime}s`);
 
       const video = sentMsg.video as any;
       if (video?.file_id) {
@@ -90,8 +80,6 @@ export class VideoQueueProcessor extends WorkerHost {
         });
       }
 
-      this.downloader.cleanup(filePath);
-      if (thumbPath) this.downloader.cleanup(thumbPath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId);
       if (job.data.userId) this.userProcessing.delete(job.data.userId);
     } catch (error) {
@@ -103,10 +91,15 @@ export class VideoQueueProcessor extends WorkerHost {
         .catch(() => {});
       if (job.data.userId) this.userProcessing.delete(job.data.userId);
 
-      if (message.toLowerCase().includes('no video formats')) {
+      if (message.includes('video emas')) {
         await this.bot.telegram.sendMessage(
           chatId,
           '❌ Bu post video emas, rasm ekan. Video (Reel) link yuboring.',
+        );
+      } else if (message.includes('topilmadi')) {
+        await this.bot.telegram.sendMessage(
+          chatId,
+          '❌ Video topilmadi. Linkni tekshirib qaytadan urinib ko\'ring.',
         );
       } else {
         await this.bot.telegram.sendMessage(

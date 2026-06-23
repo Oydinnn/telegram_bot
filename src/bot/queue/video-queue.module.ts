@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule } from '@nestjs/config';
 import { VideoQueueService } from './video-queue.service';
 import { VideoQueueProcessor } from './video-queue.processor';
 import { DownloaderService } from '../downloader/downloader.service';
 import { UserProcessingService } from '../downloader/user-processing.service';
+import { HikerApiService } from '../downloader/hikerapi.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
@@ -12,8 +14,15 @@ import { PrismaModule } from 'src/prisma/prisma.module';
       name: 'video-download',
     }),
     PrismaModule,
+    ConfigModule,
   ],
-  providers: [VideoQueueService, VideoQueueProcessor, DownloaderService, UserProcessingService],
+  providers: [
+    VideoQueueService,
+    VideoQueueProcessor,
+    DownloaderService,
+    UserProcessingService,
+    HikerApiService,
+  ],
   exports: [VideoQueueService, UserProcessingService],
 })
 export class VideoQueueModule {}

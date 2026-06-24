@@ -78,10 +78,19 @@ export class HikerApiService {
 
     const videoUrl = videoVersions[0].url;
 
+    // Audio manbasi ikki xil joyda bo'lishi mumkin:
+    // 1. Shaxsiy ovoz (original_sounds) -> original_sound_info
+    // 2. Boshqa musiqachining qo'shig'i (licensed_music) -> music_info.music_asset_info
+    const originalSoundUrl =
+      media.clips_metadata?.original_sound_info?.progressive_download_url;
+    const licensedMusicUrl =
+      media.clips_metadata?.music_info?.music_asset_info?.progressive_download_url;
+    const audioUrl = originalSoundUrl ?? licensedMusicUrl ?? null;
+
     return {
       videoUrl,
       thumbnailUrl: media.image_versions2?.candidates?.[0]?.url ?? null,
-      audioUrl: media.clips_metadata?.original_sound_info?.progressive_download_url ?? null,
+      audioUrl,
       durationSeconds: media.video_duration ?? 0,
       caption: media.caption?.text ?? null,
       username: media.user?.username ?? null,

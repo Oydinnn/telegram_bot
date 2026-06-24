@@ -82,7 +82,6 @@ export class VideoQueueProcessor extends WorkerHost {
       }
 
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId);
-      if (job.data.userId) this.userProcessing.delete(job.data.userId);
     } catch (error) {
       this.logger.error(error);
       const message = error instanceof Error ? error.message : '';
@@ -90,8 +89,6 @@ export class VideoQueueProcessor extends WorkerHost {
       await this.bot.telegram
         .deleteMessage(chatId, loadingMessageId)
         .catch(() => {});
-      if (job.data.userId) this.userProcessing.delete(job.data.userId);
-
       if (message.includes('video emas')) {
         await this.bot.telegram.sendMessage(
           chatId,

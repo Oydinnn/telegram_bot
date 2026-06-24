@@ -111,12 +111,11 @@ export class BotUpdate {
       return;
     }
 
-    if (this.userProcessing.has(userId)) {
-      await ctx.answerCbQuery('⏳ Oldingi so\'rovingiz hali bajarilmoqda. Biroz kuting.', { show_alert: true });
+    if (this.userProcessing.isDuplicate(userId, cachedVideo.instagramUrl)) {
+      await ctx.answerCbQuery();
       return;
     }
 
-    this.userProcessing.add(userId);
     await ctx.answerCbQuery('🎵 MP3 ajratilmoqda...');
 
     const loadingMsg = await ctx.reply('⏳ MP3 ajratilmoqda...');
@@ -182,12 +181,10 @@ export class BotUpdate {
 
     const userId = ctx.from!.id;
 
-    if (this.userProcessing.has(userId)) {
-      await ctx.reply('⏳ Oldingi videongiz hali yuklanmoqda. Biroz kuting.');
+    if (this.userProcessing.isDuplicate(userId, normalizedUrl)) {
       return;
     }
 
-    this.userProcessing.add(userId);
     const loadingMsg = await ctx.reply('⏳ Video yuklanmoqda ...');
 
     await this.videoQueue.addVideoJob({
@@ -242,10 +239,6 @@ export class BotUpdate {
         firstName: from.first_name,
       },
     });
-  }
-
-  releaseUser(userId: number) {
-    this.userProcessing.delete(userId);
   }
 
   private isInstagramLink(text: string): boolean {

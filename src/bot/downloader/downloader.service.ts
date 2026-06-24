@@ -133,6 +133,31 @@ export class DownloaderService {
     }
   }
 
+  /**
+   * To'g'ridan-to'g'ri video CDN linkidan (masalan HikerAPI bergan
+   * Instagram video URL'idan) audio ajratib oladi. Cookie/login kerak emas,
+   * chunki bu ochiq CDN manzili, Instagram'ning o'zidan emas.
+   */
+  async extractAudioFromVideoUrl(videoUrl: string): Promise<string> {
+    const fileId = `audiofile_${Date.now()}`;
+    const outputPath = path.join(this.tempDir, `${fileId}.mp3`);
+    const command = `ffmpeg -y -i "${videoUrl}" -vn -acodec libmp3lame -q:a 2 "${outputPath}"`;
+
+    this.logger.log(`ffmpeg orqali audio ajratilmoqda: ${fileId}`);
+    const t0 = Date.now();
+
+    await execAsync(command, { timeout: 60000 });
+
+    const totalTime = ((Date.now() - t0) / 1000).toFixed(1);
+    this.logger.log(`ffmpeg audio ajratish vaqti: ${totalTime}s`);
+
+    if (!fs.existsSync(outputPath)) {
+      throw new Error('Audio ajratib bo\'lmadi');
+    }
+
+    return outputPath;
+  }
+
   cleanup(filePath: string) {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

@@ -117,24 +117,24 @@ export class VideoQueueProcessor extends WorkerHost {
       const fetchTime = ((Date.now() - downloadStart) / 1000).toFixed(1);
       this.logger.log(`HikerAPI (audio) javob vaqti: ${fetchTime}s`);
 
-      if (!mediaInfo.audioUrl) {
-        await this.bot.telegram
-          .deleteMessage(chatId, loadingMessageId)
-          .catch(() => {});
-        await this.bot.telegram.sendMessage(
-          chatId,
-          '❌ Bu reelda audio mavjud emas.',
-        );
-        return;
-      }
+      let sentAudio;
+      let localFilePath: string | null = null;
 
-      const sentAudio = await this.bot.telegram.sendAudio(
-        chatId,
-        { url: mediaInfo.audioUrl },
-        {
-          caption: `🎵 MP3 tayyor!`,
-        },
-      );
+      if (mediaInfo.audioUrl) {
+        sentAudio = await this.bot.telegram.sendAudio(
+          chatId,
+          { url: mediaInfo.audioUrl },
+          { caption: `🎵 MP3 tayyor!` },
+        );
+      } else {
+        this.logger.log('HikerAPI audioUrl bermadi, video orqali ajratib olinmoqda...');
+        localFilePath = await this.downloader.extractAudioFromVideoUrl(mediaInfo.videoUrl);
+        sentAudio = await this.bot.telegram.sendAudio(
+          chatId,
+          { source: localFilePath },
+          { caption: `🎵 MP3 tayyor!` },
+        );
+      }
 
       const audio = sentAudio.audio as any;
       if (audio?.file_id && job.data.videoId) {
@@ -144,6 +144,7 @@ export class VideoQueueProcessor extends WorkerHost {
         });
       }
 
+      if (localFilePath) this.downloader.cleanup(localFilePath);
       await this.bot.telegram.deleteMessage(chatId, loadingMessageId).catch(() => {});
     } catch (error) {
       this.logger.error(error);
